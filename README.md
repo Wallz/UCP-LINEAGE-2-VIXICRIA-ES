@@ -1,71 +1,53 @@
-SQL
+Funcionalidades Principais
+Sistema de Saldo (Coins): O jogador gerencia o saldo na própria conta do painel.
 
-/* Tabela de Itens do Shop do Site */ 
+Loja Integrada: Permite comprar itens configurados que são entregues no inventário do personagem em cerca de 10 segundos.
 
-CREATE TABLE IF NOT EXISTS `site_shop_items` ( `id` int(11) NOT NULL AUTO_INCREMENT, `item_id` int(11) NOT NULL, `count` int(11) NOT NULL DEFAULT 1, `name` varchar(255) NOT NULL, `description` text DEFAULT NULL, `price` int(11) NOT NULL, `icon` varchar(255) DEFAULT 'fa-gift', `stock` int(11) NOT NULL DEFAULT -1, /* -1 = Infinito */ `limit_count` int(11) NOT NULL DEFAULT 0, /* 0 = Sem limite */ PRIMARY KEY (`id`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+Doação via PIX (Mercado Pago): Integração nativa com a API do Mercado Pago para aprovação automática de saldo.
 
-ALTER TABLE site_shop_items ADD COLUMN category VARCHAR(50) NOT NULL DEFAULT 'other';
+Painel do Personagem: Visualização de status (Level, PvP, PK, Classe, Status Online/Offline).
 
-CREATE TABLE IF NOT EXISTS `site_logs` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `login` varchar(45) NOT NULL,
-  `action` varchar(255) NOT NULL,
-  `ip` varchar(45) NOT NULL,
-  `date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+Ranking Top 10: Rankings de PvP e PK atualizados em tempo real.
+
+Segurança: Login com ReCaptcha e senhas criptografadas (padrão SHA-1/Base64).
 
 
-/* Tabela de função de ver item que esta comprando no site */ 
-ALTER TABLE site_shop_items ADD COLUMN view_image VARCHAR(255) DEFAULT NULL;
 
-/* Tabela de Histórico de Compras */ 
+ 
 
-CREATE TABLE IF NOT EXISTS `site_shop_history` ( `id` int(11) NOT NULL AUTO_INCREMENT, `login` varchar(45) NOT NULL, `item_db_id` int(11) NOT NULL, `count` int(11) NOT NULL, `date` timestamp NOT NULL DEFAULT current_timestamp(), PRIMARY KEY (`id`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+O que você precisa configurar?
+Para colocar o painel para rodar no seu servidor, você precisará ajustar alguns arquivos:
 
-/* (Opcional) Tabela de Doações - Caso não tenha criado ainda */ 
+1. Conexão com o Banco de Dados (db.php)
+Abra o arquivo db.php e insira as credenciais do seu banco de dados MySQL:
+ 
 
-CREATE TABLE IF NOT EXISTS `donations` ( `id` int(11) NOT NULL AUTO_INCREMENT, `account_name` varchar(45) NOT NULL, `amount` decimal(10,2) NOT NULL, `coins_received` int(11) NOT NULL, `status` varchar(20) DEFAULT 'pending', `payment_id` varchar(100) DEFAULT NULL, `date` timestamp NOT NULL DEFAULT current_timestamp(), PRIMARY KEY (`id`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+$host = '127.0.0.1';
+$user = 'root';
+$pass = 'SUA_SENHA';
+$db   = 'NOME_DO_SEU_BANCO';
+ 
 
 
-/* (Opcional) Tabela de Itens do Painel - Caso não tenha criado ainda */ 
-CREATE TABLE IF NOT EXISTS `items_delayed` (
-  `payment_id` int(11) NOT NULL AUTO_INCREMENT,
-  `owner_id` int(11) NOT NULL,
-  `item_id` int(11) NOT NULL,
-  `count` bigint(20) NOT NULL DEFAULT 1,
-  `enchant_level` int(11) NOT NULL DEFAULT 0,
-  `attribute` int(11) NOT NULL DEFAULT -1,
-  `attribute_level` int(11) NOT NULL DEFAULT -1,
-  `flags` int(11) NOT NULL DEFAULT 0,
-  `payment_status` int(11) NOT NULL DEFAULT 0,
-  `description` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`payment_id`),
-  KEY `owner_id` (`owner_id`),
-  KEY `payment_status` (`payment_status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+Configurações Gerais (config.php)
+Este arquivo é o "coração" do painel. Você deve definir:
 
-UPDATE items_delayed SET count = 2000000000 WHERE payment_id = 20;
+Mercado Pago: Seu ACCESS_TOKEN para receber os pagamentos.
 
--- Tabela de Códigos
-CREATE TABLE IF NOT EXISTS `site_bonus_codes` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `code` varchar(50) NOT NULL,
-  `reward_amount` int(11) NOT NULL DEFAULT '0',
-  `item_id` int(11) NOT NULL DEFAULT '0' COMMENT '0 = Balance, Outro ID = Item no jogo',
-  `usage_limit` int(11) NOT NULL DEFAULT '1',
-  `used_count` int(11) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+Moeda do Jogo: O nome da variável de saldo no banco (ex: PRIME_POINTS).
 
--- Tabela de Histórico (Para ninguém usar o mesmo código 2x)
-CREATE TABLE IF NOT EXISTS `site_bonus_history` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `login` varchar(45) NOT NULL,
-  `code_id` int(11) NOT NULL,
-  `date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ReCaptcha: Suas chaves do Google para proteger o cadastro.
 
--- Inserir um código de teste (Ganhe 100 Coins)
-INSERT INTO `site_bonus_codes` (`code`, `reward_amount`, `usage_limit`) VALUES ('WELCOME-AETHER', 100, 9999);
+Preços: O valor de cada coin em Reais.
+
+3. Estrutura do Banco de Dados
+O painel utiliza algumas tabelas que podem não ser padrão no seu emulador. Você precisará criar (ou adaptar):
+
+donations: Para registrar as transações de PIX.
+
+site_shop_history: Para o histórico de compras.
+
+account_gsdata: (Ou similar) Onde o saldo dos jogadores fica armazenado.
+
+4. Customização Visual (style.css)
+O design é moderno e utiliza o tema roxo/escuro. Você pode alterar as cores e o fundo facilmente editando as variáveis de CSS no arquivo style.css.
